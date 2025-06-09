@@ -1,0 +1,398 @@
+
+{% extends 'attendance/base.html' %}
+
+{% block title %}Admin - All Attendance Records{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">All Attendance Records</h1>
+                <p class="text-gray-600 mt-1">Comprehensive view of all employee attendance</p>
+            </div>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="exportAllData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span>Export All</span>
+            </button>
+            <a href="{% url 'attendance:dashboard' %}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg transition duration-200 flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Records</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ records.count }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Present Today</p>
+                    <p class="text-2xl font-bold text-gray-900" id="present-count">{{ present }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Late Today</p>
+                    <p class="text-2xl font-bold text-gray-900" id="late-count">{{ late }}</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Absent Today</p>
+                    <p class="text-2xl font-bold text-gray-900" id="absent-count">{{ absent }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            <div class="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 flex-1">
+                <!-- Search -->
+                <div class="relative flex-1 max-w-md">
+                    <input type="text" id="search-input" placeholder="Search employees..." 
+                           class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent w-full">
+                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+
+                <!-- Department Filter -->
+                <select id="department-filter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option value="">All Departments</option>
+                    <option value="HR">Human Resources</option>
+                    <option value="IT">Information Technology</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Operations">Operations</option>
+                </select>
+
+                <!-- Status Filter -->
+                <select id="status-filter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option value="">All Status</option>
+                    <option value="present">Present</option>
+                    <option value="late">Late</option>
+                    <option value="absent">Absent</option>
+                    <option value="half_day">Half Day</option>
+                </select>
+
+                <!-- Date Filter -->
+                <input type="date" id="date-filter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+            </div>
+
+            <!-- Filter Actions -->
+            <div class="flex items-center space-x-2">
+                <button onclick="applyFilters()" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg transition duration-200">
+                    Apply Filters
+                </button>
+                <button onclick="clearFilters()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                    Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Records Table -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Employee Attendance Records</h3>
+        </div>
+        
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check Out</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="records-tbody" class="bg-white divide-y divide-gray-200">
+                    {% for record in records %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-200">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {% if record.user.department %}
+                                    {{ record.user.department }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div class="font-medium">{{ record.date|date:"M d, Y" }}</div>
+                            <div class="text-xs text-gray-500">{{ record.date|date:"l" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if record.check_in_time %}
+                                <div class="font-medium">{{ record.check_in_time|time:"H:i" }}</div>
+                                {% if record.is_late %}
+                                    <div class="text-xs text-red-600">{{ record.late_by_minutes }}m late</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-400">--</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if record.check_out_time %}
+                                <div class="font-medium">{{ record.check_out_time|time:"H:i" }}</div>
+                            {% else %}
+                                {% if record.check_in_time %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5 animate-pulse"></span>
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="text-gray-400">--</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div class="font-medium">{{ record.total_hours }}h</div>
+                            {% if record.overtime_hours > 0 %}
+                                <div class="text-xs text-blue-600">+{{ record.overtime_hours }}h OT</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if record.status == 'present' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    Present
+                                </span>
+                            {% elif record.status == 'late' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    Late
+                                </span>
+                            {% elif record.status == 'absent' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    Absent
+                                </span>
+                            {% elif record.status == 'half_day' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                    Half Day
+                                </span>
+                            {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    {{ record.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'attendance:employee_detail' record.user.id %}" 
+                                   class="text-indigo-600 hover:text-indigo-900 transition-colors duration-200 flex items-center space-x-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    <span>View</span>
+                                </a>
+                                {% if record.check_in_time and not record.check_out_time %}
+                                    <button onclick="forceCheckout('{{ record.id }}')" 
+                                            class="text-red-600 hover:text-red-900 transition-colors duration-200 flex items-center space-x-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"></path>
+                                        </svg>
+                                        <span>Force Checkout</span>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">No attendance records found</h3>
+                                <p class="text-gray-500">No records match your current filters</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh stats every 30 seconds
+    setInterval(loadStats, 30000);
+    loadStats();
+});
+
+function loadStats() {
+    fetch('/attendance/api/admin/stats/')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('present-count').textContent = data.present_today || 0;
+            document.getElementById('late-count').textContent = data.late_today || 0;
+            document.getElementById('absent-count').textContent = data.absent_today || 0;
+        })
+        .catch(error => console.warn('Stats update failed:', error));
+}
+
+function applyFilters() {
+    const search = document.getElementById('search-input').value;
+    const department = document.getElementById('department-filter').value;
+    const status = document.getElementById('status-filter').value;
+    const date = document.getElementById('date-filter').value;
+    
+    let url = window.location.pathname + '?';
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (department) url += `department=${encodeURIComponent(department)}&`;
+    if (status) url += `status=${encodeURIComponent(status)}&`;
+    if (date) url += `date=${encodeURIComponent(date)}&`;
+    
+    window.location.href = url;
+}
+
+function clearFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('department-filter').value = '';
+    document.getElementById('status-filter').value = '';
+    document.getElementById('date-filter').value = '';
+    window.location.href = window.location.pathname;
+}
+
+function exportAllData() {
+    const search = document.getElementById('search-input').value;
+    const department = document.getElementById('department-filter').value;
+    const status = document.getElementById('status-filter').value;
+    const date = document.getElementById('date-filter').value;
+    
+    let url = '/attendance/export/?';
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (department) url += `department=${encodeURIComponent(department)}&`;
+    if (status) url += `status=${encodeURIComponent(status)}&`;
+    if (date) url += `date=${encodeURIComponent(date)}&`;
+    
+    window.open(url, '_blank');
+}
+
+function forceCheckout(recordId) {
+    if (confirm('Are you sure you want to force checkout for this employee?')) {
+        showLoading();
+        
+        fetch('/attendance/api/admin/checkout/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify({ record_id: recordId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                alert('Employee checked out successfully!');
+                window.location.reload();
+            } else {
+                alert(data.error || 'Error forcing checkout');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error:', error);
+            alert('Network error occurred');
+        });
+    }
+}
+
+// Auto-apply filters on Enter key
+document.getElementById('search-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        applyFilters();
+    }
+});
+
+
+['department-filter', 'status-filter', 'date-filter'].forEach(id => {
+    document.getElementById(id).addEventListener('change', applyFilters);
+});
+</script>
+{% endblock %}
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                        <span class="text-sm font-medium text-gray-700">
+                                            {% if record.user.first_name %}
+                                                {{ record.user.first_name.0 }}{{ record.user.last_name.0|default:'' }}
+                                            {% else %}
+                                                {{ record.user.username.0|upper }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {% if record.user.first_name %}
+                                            {{ record.user.first_name }} {{ record.user.last_name }}
+                                        {% else %}
+                                            {{ record.user.username }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-sm text-gray-500">{{ record.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">

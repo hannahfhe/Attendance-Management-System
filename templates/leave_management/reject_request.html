@@ -1,0 +1,190 @@
+
+
+{% extends 'base.html' %}
+
+{% block title %}Reject Leave Request - AttendanceHub{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+    <div class="flex justify-between items-center mb-8">
+        <div class="flex items-center space-x-4">
+            <a href="{% url 'leave_management:pending_requests' %}" class="text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Reject Leave Request</h1>
+                <p class="text-gray-600 mt-1">Provide a reason for rejecting this leave request</p>
+            </div>
+        </div>
+    </div>
+
+ 
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Request Details</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Employee Info -->
+            <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 h-16 w-16">
+                    <div class="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center">
+                        <span class="text-xl font-medium text-gray-700">
+                            {% if leave_request.user.first_name %}
+                                {{ leave_request.user.first_name.0 }}{{ leave_request.user.last_name.0|default:'' }}
+                            {% else %}
+                                {{ leave_request.user.username.0|upper }}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-xl font-semibold text-gray-900">
+                        {% if leave_request.user.first_name %}
+                            {{ leave_request.user.first_name }} {{ leave_request.user.last_name }}
+                        {% else %}
+                            {{ leave_request.user.username }}
+                        {% endif %}
+                    </h4>
+                    <p class="text-gray-600">{{ leave_request.user.email }}</p>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mt-1">
+                        {{ leave_request.user.department|default:"N/A" }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Leave Details -->
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Leave Type</label>
+                    <p class="text-lg font-semibold text-gray-900">{{ leave_request.leave_type.name }}</p>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Duration</label>
+                    <p class="text-lg font-semibold text-gray-900">
+                        {{ leave_request.start_date|date:"M d, Y" }} - {{ leave_request.end_date|date:"M d, Y" }}
+                    </p>
+                    <p class="text-sm text-gray-600">{{ leave_request.total_days }} day{{ leave_request.total_days|pluralize }}</p>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Submitted</label>
+                    <p class="text-lg font-semibold text-gray-900">{{ leave_request.created_at|date:"M d, Y" }}</p>
+                    <p class="text-sm text-gray-600">{{ leave_request.created_at|timesince }} ago</p>
+                </div>
+            </div>
+        </div>
+
+        {% if leave_request.reason %}
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <label class="text-sm font-medium text-gray-600">Employee's Reason</label>
+            <p class="mt-2 text-gray-900 leading-relaxed bg-gray-50 p-4 rounded-lg">{{ leave_request.reason }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Rejection Form -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-6 flex items-center">
+            <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Rejection Details
+        </h3>
+        
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Rejection Reason -->
+            <div>
+                <label for="rejection_reason" class="block text-sm font-medium text-gray-700 mb-2">
+                    Reason for Rejection <span class="text-red-500">*</span>
+                </label>
+                <textarea name="rejection_reason" id="rejection_reason" rows="6" required
+                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                          placeholder="Please provide a clear reason for rejecting this leave request..."></textarea>
+                <p class="mt-2 text-sm text-gray-500">This reason will be sent to the employee as part of the rejection notification.</p>
+            </div>
+
+            <!-- Pre-filled Reason Options -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">Quick Rejection Reasons</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <button type="button" onclick="setReason('Insufficient staffing during requested period')" 
+                            class="text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                        <div class="text-sm font-medium text-gray-900">Insufficient Staffing</div>
+                        <div class="text-xs text-gray-600">Not enough coverage during requested period</div>
+                    </button>
+                    
+                    <button type="button" onclick="setReason('Request submitted too close to leave date')" 
+                            class="text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                        <div class="text-sm font-medium text-gray-900">Short Notice</div>
+                        <div class="text-xs text-gray-600">Insufficient advance notice provided</div>
+                    </button>
+                    
+                    <button type="button" onclick="setReason('Critical project deadlines during requested period')" 
+                            class="text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                        <div class="text-sm font-medium text-gray-900">Project Deadlines</div>
+                        <div class="text-xs text-gray-600">Critical work commitments</div>
+                    </button>
+                    
+                    <button type="button" onclick="setReason('Maximum leave quota exceeded for this period')" 
+                            class="text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                        <div class="text-sm font-medium text-gray-900">Quota Exceeded</div>
+                        <div class="text-xs text-gray-600">Leave allowance limits reached</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <a href="{% url 'leave_management:pending_requests' %}" 
+                   class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition duration-200 flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    <span>Cancel</span>
+                </a>
+                
+                <div class="flex space-x-3">
+                    <a href="{% url 'leave_management:approve_request' leave_request.id %}" 
+                       class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-200 flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>Approve Instead</span>
+                    </a>
+                    
+                    <button type="submit" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition duration-200 flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        <span>Reject Request</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function setReason(reason) {
+    document.getElementById('rejection_reason').value = reason;
+}
+</script>
+
+<!-- Custom CSS for animations -->
+<style>
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}

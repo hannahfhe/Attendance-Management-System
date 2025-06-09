@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Details - {{ employee.get_full_name }} - AttendanceHub{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Employee Details</h1>
+                <p class="text-gray-600">Attendance information for {{ employee.get_full_name|default:employee.username }}</p>
+            </div>
+            <a href="{% url 'attendance:dashboard' %}" 
+               class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+                <div class="p-4 mb-4 rounded border-l-4 {% if message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Employee Info -->
+    <div class="bg-white rounded border p-6 mb-6">
+        <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
+                <span class="text-xl font-bold text-gray-700">
+                    {% if employee.first_name %}
+                        {{ employee.first_name.0 }}{{ employee.last_name.0|default:'' }}
+                    {% else %}
+                        {{ employee.username.0|upper }}
+                    {% endif %}
+                </span>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">
+                    {% if employee.first_name or employee.last_name %}
+                        {{ employee.first_name }} {{ employee.last_name }}
+                    {% else %}
+                        {{ employee.username }}
+                    {% endif %}
+                </h2>
+                <p class="text-gray-600">{{ employee.email }}</p>
+                <p class="text-sm text-gray-500">
+                    Department: 
+                    {% if employee.department %}
+                        {{ employee.department }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded border p-4">
+            <h3 class="text-sm font-medium text-gray-600">Total Records</h3>
+            <p class="text-2xl font-bold text-gray-900">{{ records|length }}</p>
+        </div>
+        <div class="bg-white rounded border p-4">
+            <h3 class="text-sm font-medium text-gray-600">Present Days</h3>
+            <p class="text-2xl font-bold text-green-600">
+                {% with present_count=0 %}
+                    {% for record in records %}
+                        {% if record.status == 'present' or record.status == 'late' %}
+                            {% with present_count=present_count|add:1 %}
+                                {% if forloop.last %}{{ present_count }}{% endif %}
+                            {% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                {% endwith %}
+            </p>
+        </div>
+        <div class="bg-white rounded border p-4">
+            <h3 class="text-sm font-medium text-gray-600">Late Days</h3>
+            <p class="text-2xl font-bold text-yellow-600">
+                {% with late_count=0 %}
+                    {% for record in records %}
+                        {% if record.is_late %}
+                            {% with late_count=late_count|add:1 %}
+                                {% if forloop.last %}{{ late_count }}{% endif %}
+                            {% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                {% endwith %}
+            </p>
+        </div>
+        <div class="bg-white rounded border p-4">
+            <h3 class="text-sm font-medium text-gray-600">Total Hours</h3>
+            <p class="text-2xl font-bold text-blue-600">
+                {% with total_hours=0 %}
+                    {% for record in records %}
+                        {% with total_hours=total_hours|add:record.total_hours %}
+                            {% if forloop.last %}{{ total_hours }}h{% endif %}
+                        {% endwith %}
+                    {% endfor %}
+                {% endwith %}
+            </p>
+        </div>
+    </div>
+
+   
+    <!-- Recent Records -->
+    <div class="bg-white rounded border">
+        <div class="p-4 border-b">
+            <h3 class="text-lg font-medium">Recent Attendance Records (Last 30 Days)</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check In</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check Out</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hours</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Overtime</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for record in records %}
+                    <tr>
+                        <td class="px-4 py-3 text-sm">
+                            <div class="font-medium">{{ record.date|date:"M d, Y" }}</div>
+                            <div class="text-xs text-gray-500">{{ record.date|date:"l" }}</div>
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if record.check_in_time %}
+                                <div class="font-medium">{{ record.check_in_time|time:"H:i" }}</div>
+                                {% if record.is_late %}
+                                    <div class="text-xs text-red-600">{{ record.late_by_minutes }}m late</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-400">--</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if record.check_out_time %}
+                                <div class="font-medium">{{ record.check_out_time|time:"H:i" }}</div>
+                            {% elif record.check_in_time %}
+                                <span class="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800">Active</span>
+                            {% else %}
+                                <span class="text-gray-400">--</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-medium">{{ record.total_hours }}h</td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if record.overtime_hours > 0 %}
+                                <span class="text-blue-600">+{{ record.overtime_hours }}h</span>
+                            {% else %}
+                                <span class="text-gray-400">--</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if record.status == 'present' %}
+                                <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800">Present</span>
+                            {% elif record.status == 'late' %}
+                                <span class="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800">Late</span>
+                            {% elif record.status == 'absent' %}
+                                <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-800">Absent</span>
+                            {% elif record.status == 'half_day' %}
+                                <span class="px-2 py-1 text-xs rounded bg-orange-100 text-orange-800">Half Day</span>
+                            {% else %}
+                                <span class="px-2 py-1 text-xs rounded bg-gray-100 text-gray-800">{{ record.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if record.check_in_time and not record.check_out_time %}
+                                <form method="post" action="{% url 'attendance:admin_checkout' record.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            onclick="return confirm('Force checkout for this employee?')"
+                                            class="text-red-600 hover:text-red-800 text-sm">
+                                        Force Checkout
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="text-gray-400">--</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">No attendance records found</h3>
+                                <p class="text-gray-500">This employee has no attendance records yet</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
