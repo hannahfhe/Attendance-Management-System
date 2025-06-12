@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AttendanceHub - Employee Management System{% endblock %}</title>
     
-   
     <script src="https://cdn.tailwindcss.com"></script>
     
-
     <script>
         tailwind.config = {
             theme: {
@@ -25,7 +23,6 @@
         }
     </script>
     
-
     <style>
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -40,7 +37,6 @@
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     
-
     <nav class="bg-white shadow-lg border-b-4 border-primary">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
@@ -55,7 +51,7 @@
                     </div>
                     
                     {% if user.is_authenticated %}
-         
+                    <!-- Desktop Navigation -->
                     <div class="hidden md:ml-10 md:flex md:space-x-8">
                         <a href="{% url 'accounts:dashboard' %}" class="text-gray-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition duration-200">
                             Dashboard
@@ -70,14 +66,17 @@
                         <a href="{% url 'reports:dashboard' %}" class="text-gray-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition duration-200">
                             Reports
                         </a>
+                        <a href="{% url 'accounts:employee_list' %}" class="text-gray-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition duration-200">
+                            Employees
+                        </a>
                         {% endif %}
                     </div>
                     {% endif %}
                 </div>
                 
                 {% if user.is_authenticated %}
-                <div class="flex items-center space-x-4">
-          
+                <!-- Desktop User Menu -->
+                <div class="hidden md:flex md:items-center md:space-x-4">
                     <div class="text-sm text-gray-600">
                         Welcome, <span class="font-semibold text-gray-800">{{ user.first_name }}</span>
                         {% if user.role %}
@@ -85,7 +84,6 @@
                         {% endif %}
                     </div>
                     
-               
                     <div class="relative">
                         <button id="user-menu-button" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-primary">
                             <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
@@ -93,39 +91,90 @@
                             </div>
                         </button>
                         
-                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                            <a href="{% url 'accounts:profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+                            <a href="{% url 'accounts:profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150">
                                 My Profile
                             </a>
-                            <a href="{% url 'accounts:edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <a href="{% url 'accounts:edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150">
                                 Edit Profile
                             </a>
                             <div class="border-t border-gray-100"></div>
-                            <a href="{% url 'accounts:logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <a href="{% url 'accounts:logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150">
                                 Sign out
                             </a>
                         </div>
                     </div>
                 </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-primary hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary transition duration-200">
+                        <span class="sr-only">Open main menu</span>
+                        <!-- Hamburger icon -->
+                        <svg id="menu-icon" class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <!-- Close icon -->
+                        <svg id="close-icon" class="hidden h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
                 {% endif %}
             </div>
         </div>
         
-      
+        <!-- Mobile menu -->
         {% if user.is_authenticated %}
-        <div class="md:hidden" id="mobile-menu" style="display: none;">
-            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="{% url 'accounts:dashboard' %}" class="text-gray-600 hover:text-primary block px-3 py-2 rounded-md text-base font-medium">Dashboard</a>
-                <a href="{% url 'attendance:dashboard' %}" class="text-gray-600 hover:text-primary block px-3 py-2 rounded-md text-base font-medium">Attendance</a>
-                <a href="{% url 'leave_management:dashboard' %}" class="text-gray-600 hover:text-primary block px-3 py-2 rounded-md text-base font-medium">Leave</a>
+        <div class="md:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 border-t">
+                <a href="{% url 'accounts:dashboard' %}" class="text-gray-600 hover:text-primary hover:bg-white block px-3 py-2 rounded-md text-base font-medium transition duration-200">
+                    Dashboard
+                </a>
+                <a href="{% url 'attendance:dashboard' %}" class="text-gray-600 hover:text-primary hover:bg-white block px-3 py-2 rounded-md text-base font-medium transition duration-200">
+                    Attendance
+                </a>
+                <a href="{% url 'leave_management:dashboard' %}" class="text-gray-600 hover:text-primary hover:bg-white block px-3 py-2 rounded-md text-base font-medium transition duration-200">
+                    Leave
+                </a>
                 {% if user.is_admin_or_hr %}
-                <a href="{% url 'reports:dashboard' %}" class="text-gray-600 hover:text-primary block px-3 py-2 rounded-md text-base font-medium">Reports</a>
+                <a href="{% url 'reports:dashboard' %}" class="text-gray-600 hover:text-primary hover:bg-white block px-3 py-2 rounded-md text-base font-medium transition duration-200">
+                    Reports
+                </a>
+                <a href="{% url 'accounts:employee_list' %}" class="text-gray-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition duration-200">
+                            Employees
+                        </a>
                 {% endif %}
+                
+                <!-- Mobile User Info -->
+                <div class="border-t pt-4">
+                    <div class="flex items-center px-3 py-2">
+                        <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                            <span class="text-white font-medium">{{ user.first_name.0 }}{{ user.last_name.0 }}</span>
+                        </div>
+                        <div class="ml-3">
+                            <div class="text-base font-medium text-gray-800">{{ user.first_name }} {{ user.last_name }}</div>
+                            {% if user.role %}
+                            <div class="text-sm text-gray-500">{{ user.get_role_display }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mt-3 space-y-1">
+                        <a href="{% url 'accounts:profile' %}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-primary hover:bg-white rounded-md transition duration-200">
+                            My Profile
+                        </a>
+                        <a href="{% url 'accounts:edit_profile' %}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-primary hover:bg-white rounded-md transition duration-200">
+                            Edit Profile
+                        </a>
+                        <a href="{% url 'accounts:logout' %}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-primary hover:bg-white rounded-md transition duration-200">
+                            Sign out
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
         {% endif %}
     </nav>
-
 
     {% if messages %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
@@ -165,13 +214,9 @@
     </div>
     {% endif %}
 
-
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {% block content %}{% endblock %}
     </main>
-
- 
-
 
     <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
         <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
@@ -183,9 +228,8 @@
         </div>
     </div>
 
-
     <script>
-
+        // Utility functions
         function showLoading() {
             document.getElementById('loading-overlay').classList.remove('hidden');
         }
@@ -209,41 +253,9 @@
             return cookieValue;
         }
 
-   
         const csrftoken = getCookie('csrftoken');
 
-    
-        document.addEventListener('DOMContentLoaded', function() {
-            const userMenuButton = document.getElementById('user-menu-button');
-            const userMenu = document.getElementById('user-menu');
-            
-            if (userMenuButton && userMenu) {
-                userMenuButton.addEventListener('click', function() {
-                    userMenu.classList.toggle('hidden');
-                });
-
-            
-                document.addEventListener('click', function(event) {
-                    if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
-                        userMenu.classList.add('hidden');
-                    }
-                });
-            }
-
-     
-            setTimeout(function() {
-                const alerts = document.querySelectorAll('.alert');
-                alerts.forEach(function(alert) {
-                    alert.style.transition = 'opacity 0.5s';
-                    alert.style.opacity = '0';
-                    setTimeout(function() {
-                        alert.remove();
-                    }, 500);
-                });
-            }, 5000);
-        });
-
-
+        // Clock update function
         function updateClock() {
             const now = new Date();
             const timeString = now.toLocaleTimeString('en-US', {
@@ -258,17 +270,13 @@
             }
         }
 
-      
-        setInterval(updateClock, 1000);
-        updateClock(); 
-
-    
+        // Form submission with loading
         function submitFormWithLoading(form) {
             showLoading();
             form.submit();
         }
 
-    
+        // AJAX request function
         function makeAjaxRequest(url, method = 'GET', data = null) {
             return fetch(url, {
                 method: method,
@@ -284,7 +292,137 @@
                 return { error: 'Network error occurred' };
             });
         }
-        
+
+        // Main DOM Content Loaded event
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing components...');
+
+            // Mobile menu functionality
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            const closeIcon = document.getElementById('close-icon');
+
+            console.log('Mobile menu elements:', {
+                button: !!mobileMenuButton,
+                menu: !!mobileMenu,
+                menuIcon: !!menuIcon,
+                closeIcon: !!closeIcon
+            });
+
+            if (mobileMenuButton && mobileMenu && menuIcon && closeIcon) {
+                mobileMenuButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('Mobile menu button clicked');
+                    
+                    const isHidden = mobileMenu.classList.contains('hidden');
+                    console.log('Menu currently hidden:', isHidden);
+                    
+                    if (isHidden) {
+                        mobileMenu.classList.remove('hidden');
+                        menuIcon.classList.add('hidden');
+                        closeIcon.classList.remove('hidden');
+                        console.log('Mobile menu opened');
+                    } else {
+                        mobileMenu.classList.add('hidden');
+                        menuIcon.classList.remove('hidden');
+                        closeIcon.classList.add('hidden');
+                        console.log('Mobile menu closed');
+                    }
+                });
+
+                // Close mobile menu when clicking on a link
+                const mobileLinks = mobileMenu.querySelectorAll('a');
+                mobileLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenu.classList.add('hidden');
+                        menuIcon.classList.remove('hidden');
+                        closeIcon.classList.add('hidden');
+                        console.log('Mobile menu closed via link click');
+                    });
+                });
+
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!mobileMenuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
+                        if (!mobileMenu.classList.contains('hidden')) {
+                            mobileMenu.classList.add('hidden');
+                            menuIcon.classList.remove('hidden');
+                            closeIcon.classList.add('hidden');
+                            console.log('Mobile menu closed via outside click');
+                        }
+                    }
+                });
+            } else {
+                console.error('Some mobile menu elements not found:', {
+                    button: mobileMenuButton,
+                    menu: mobileMenu,
+                    menuIcon: menuIcon,
+                    closeIcon: closeIcon
+                });
+            }
+
+            // Desktop user menu functionality
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+
+            if (userMenuButton && userMenu) {
+                userMenuButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    userMenu.classList.toggle('hidden');
+                    console.log('User menu toggled');
+                });
+
+                // Close user menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
+                        userMenu.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 500);
+                });
+            }, 5000);
+
+            // Start clock
+            setInterval(updateClock, 1000);
+            updateClock();
+        });
+
+        // Global mobile menu toggle function (fallback)
+        window.toggleMobileMenu = function() {
+            console.log('Global toggle function called');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            const closeIcon = document.getElementById('close-icon');
+            
+            if (mobileMenu && menuIcon && closeIcon) {
+                const isHidden = mobileMenu.classList.contains('hidden');
+                
+                if (isHidden) {
+                    mobileMenu.classList.remove('hidden');
+                    menuIcon.classList.add('hidden');
+                    closeIcon.classList.remove('hidden');
+                } else {
+                    mobileMenu.classList.add('hidden');
+                    menuIcon.classList.remove('hidden');
+                    closeIcon.classList.add('hidden');
+                }
+                console.log('Global toggle completed, menu hidden:', !isHidden);
+            }
+        };
     </script>
 
     {% block extra_js %}{% endblock %}
