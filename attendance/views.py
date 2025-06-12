@@ -10,23 +10,28 @@ from accounts.models import User
 from datetime import datetime, date, timedelta
 import csv
 
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from datetime import date, datetime
+
 @login_required
 def attendance_dashboard(request):
-    """Simple attendance dashboard with server-side rendering only"""
+    """Simple attendance dashboard with server-side rendering and pagination"""
     today = date.today()
     user = request.user
     
-
     today_record = AttendanceRecord.objects.filter(
         user=user, 
         date=today
     ).first()
     
     if user.is_staff:
-    
         records = AttendanceRecord.objects.select_related('user').all()
         
-     
+  
         search = request.GET.get('search', '').strip()
         department = request.GET.get('department', '').strip()
         status = request.GET.get('status', '').strip()
@@ -41,7 +46,6 @@ def attendance_dashboard(request):
             )
         
         if department:
-       
             if hasattr(User, 'department'):
                 records = records.filter(user__department=department)
             else:
@@ -58,7 +62,20 @@ def attendance_dashboard(request):
                 pass
         
      
-        records = records.order_by('-date', 'user__first_name')[:100]
+        records = records.order_by('-date', 'user__first_name')
+        
+    
+        paginator = Paginator(records, 25)  
+        page = request.GET.get('page')
+        
+        try:
+            records = paginator.page(page)
+        except PageNotAnInteger:
+           
+            records = paginator.page(1)
+        except EmptyPage:
+        
+            records = paginator.page(paginator.num_pages)
         
       
         present_count = AttendanceRecord.objects.filter(
@@ -73,8 +90,19 @@ def attendance_dashboard(request):
         total_employees = User.objects.filter(is_active=True).count()
         
     else:
-        # Regular user view
-        records = AttendanceRecord.objects.filter(user=user).order_by('-date')[:10]
+       
+        user_records = AttendanceRecord.objects.filter(user=user).order_by('-date')
+        
+        paginator = Paginator(user_records, 10)  
+        page = request.GET.get('page')
+        
+        try:
+            records = paginator.page(page)
+        except PageNotAnInteger:
+            records = paginator.page(1)
+        except EmptyPage:
+            records = paginator.page(paginator.num_pages)
+            
         present_count = late_count = absent_count = total_employees = 0
     
     context = {
@@ -92,7 +120,6 @@ def attendance_dashboard(request):
         }
     }
     return render(request, 'attendance/dashboard.html', context)
-
 @login_required
 def attendance_records(request):
     """View all attendance records for the user"""
