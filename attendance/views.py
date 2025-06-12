@@ -2,7 +2,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from django.db.models import Q
+from django.db.models import Q,Sum
 from django.utils import timezone
 from django.contrib import messages
 from .models import AttendanceRecord, CheckInOut
@@ -122,16 +122,69 @@ def attendance_dashboard(request):
     return render(request, 'attendance/dashboard.html', context)
 @login_required
 def attendance_records(request):
-    """View all attendance records for the user"""
-    records = AttendanceRecord.objects.filter(
-        user=request.user
-    ).order_by('-date')[:50]
+    """View all attendance records for the user with filtering"""
+    
+    # Get filter parameters from request
+    month_filter = request.GET.get('month', '')
+    year_filter = request.GET.get('year', '')
+    status_filter = request.GET.get('status', '')
+    page = request.GET.get('page', 1)
+    
+    # Base queryset
+    records = AttendanceRecord.objects.filter(user=request.user)
+    
+    # Apply filters
+    if month_filter:
+        records = records.filter(date__month=int(month_filter))
+    if year_filter:
+        records = records.filter(date__year=int(year_filter))
+    if status_filter:
+        if status_filter == 'present':
+            records = records.filter(Q(status='present') | Q(status='late'))
+        else:
+            records = records.filter(status=status_filter)
+    
+    # Order by date (most recent first)
+    records = records.order_by('-date')
+    
+    # Calculate summary statistics for filtered records
+    summary_stats = {
+        'total_present': records.filter(Q(status='present') | Q(status='late')).count(),
+        'total_absent': records.filter(status='absent').count(),
+        'total_late': records.filter(is_late=True).count(),
+        'total_hours': records.aggregate(Sum('total_hours'))['total_hours__sum'] or 0,
+    }
+    
+    # Pagination
+    paginator = Paginator(records, 20)  # 20 records per page
+    page_obj = paginator.get_page(page)
+    
+    # Get current date for default filters
+    current_date = date.today()
+    
+    # Generate year options (current year and previous 2 years)
+    year_options = [current_date.year - i for i in range(3)]
+    
+    # Month options
+    month_options = [
+        (1, 'January'), (2, 'February'), (3, 'March'), (4, 'April'),
+        (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
+        (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
+    ]
     
     context = {
-        'records': records,
+        'page_obj': page_obj,
+        'summary_stats': summary_stats,
+        'month_filter': month_filter,
+        'year_filter': year_filter,
+        'status_filter': status_filter,
+        'year_options': year_options,
+        'month_options': month_options,
+        'current_month': current_date.month,
+        'current_year': current_date.year,
     }
+    
     return render(request, 'attendance/records.html', context)
-
 @login_required
 def check_in_view(request):
     """Handle check-in"""
