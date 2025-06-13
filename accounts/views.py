@@ -76,6 +76,10 @@ def dashboard_view(request):
         
         stats = {
             'total_employees': User.objects.all().count(),
+            'it_employees': User.objects.filter(department='IT').count(),
+            'hr_employees': User.objects.filter(department='HR').count(),
+            'finance_employees': User.objects.filter(department='Finance').count(),
+            'marketing_employees': User.objects.filter(department='Marketing').count(),
             'present_days': present_count,
             'absent_days': absent_count,
             'late_days': late_count,
